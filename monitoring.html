@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rapor PBJ - Monitoring</title>
+  <link rel="icon" href="favicon-v2.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32-v2.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon-v2.png">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root{
+      --bg:#eef4fb;
+      --card:#ffffff;
+      --text:#122033;
+      --muted:#64748b;
+      --line:#dbe5f0;
+      --navy:#123a72;
+      --navy2:#245a9b;
+      --teal:#0f766e;
+      --danger:#b91c1c;
+      --warning:#9a6100;
+      --shadow-lg:0 16px 40px rgba(15,23,42,.10);
+      --shadow-sm:0 4px 14px rgba(15,23,42,.06);
+      --radius:22px;
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family:"Inter","Segoe UI",Arial,sans-serif;
+      background:linear-gradient(180deg,#f8fbff 0%,#eef4fb 100%);
+      color:var(--text);
+    }
+
+    .wrap{
+      max-width:1600px;
+      margin:0 auto;
+      padding:22px 16px 30px;
+    }
+
+    .hero{
+      background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 60%,#2f9a8f 100%);
+      color:#fff;
+      border-radius:28px;
+      padding:24px;
+      box-shadow:0 24px 56px rgba(18,58,114,.22);
+      margin-bottom:18px;
+    }
+
+    .hero h1{
+      margin:0 0 8px;
+      font-size:34px;
+      font-weight:900;
+    }
+
+    .hero p{
+      margin:0;
+      color:rgba(255,255,255,.86);
+      line-height:1.7;
+      max-width:980px;
+      font-size:14px;
+    }
+
+    .summary-strip{
+      display:grid;
+      grid-template-columns:repeat(6,minmax(0,1fr));
+      gap:12px;
+      margin-top:18px;
+    }
+
+    .sum-card{
+      background:rgba(255,255,255,.14);
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:18px;
+      padding:14px;
+    }
+
+    .sum-label{
+      font-size:11px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      font-weight:800;
+      color:rgba(255,255,255,.78);
+      margin-bottom:8px;
+    }
+
+    .sum-value{
+      font-size:24px;
+      font-weight:900;
+      color:#fff;
+      line-height:1.1;
+    }
+
+    .card{
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow-lg);
+      padding:18px;
+      margin-bottom:16px;
+      border:1px solid #eef3f9;
+    }
+
+    h2{
+      margin:0 0 14px;
+      font-size:22px;
+      font-weight:900;
+      color:#102544;
+    }
+
+    .sub{
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.6;
+      margin-top:-6px;
+      margin-bottom:12px;
+    }
+
+    .grid{display:grid;gap:12px}
+    .grid-6{grid-template-columns:repeat(6,minmax(0,1fr))}
+    .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+
+    label{
+      display:block;
+      font-size:12px;
+      font-weight:800;
+      margin-bottom:7px;
+      color:#334155;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+
+    input,select,button{
+      width:100%;
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      font-size:14px;
+      font-family:inherit;
+      background:#fff;
+    }
+
+    button{
+      border:none;
+      cursor:pointer;
+      font-weight:800;
+      background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);
+      color:#fff;
+      box-shadow:0 12px 22px rgba(18,58,114,.18);
+    }
+
+    button.secondary{
+      background:linear-gradient(180deg,#fff 0%,#edf3fb 100%);
+      color:#18324f;
+      border:1px solid var(--line);
+      box-shadow:var(--shadow-sm);
+    }
+
+    .inline-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:14px;
+    }
+
+    .inline-actions button{
+      width:auto;
+    }
+
+    .status{
+      margin-top:10px;
+      font-weight:800;
+      color:#153b68;
+      line-height:1.6;
+      white-space:pre-wrap;
+    }
+
+    .table-wrap{
+      overflow:auto;
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:#fff;
+      box-shadow:var(--shadow-sm);
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:1750px;
+      font-size:14px;
+    }
+
+    th,td{
+      padding:11px 12px;
+      border-bottom:1px solid #e2e8f0;
+      vertical-align:top;
+      text-align:left;
+      line-height:1.5;
+    }
+
+    th{
+      background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);
+      color:#fff;
+      font-size:13px;
+      font-weight:800;
+      white-space:nowrap;
+    }
+
+    th.sortable{
+      cursor:pointer;
+      user-select:none;
+    }
+
+    th.sortable .sort-indicator{
+      display:inline-block;
+      margin-left:6px;
+      font-size:12px;
+      font-weight:900;
+      opacity:.9;
+    }
+
+    .right{text-align:right}
+    .center{text-align:center}
+    .bold{font-weight:800}
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:7px 11px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:900;
+      border:1px solid transparent;
+      white-space:nowrap;
+    }
+
+    .st-belum{background:#fff1f2;color:#b91c1c;border-color:#fecdd3}
+    .st-berjalan{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
+    .st-sesuai{background:#ecfdf5;color:#0f766e;border-color:#bbf7d0}
+    .st-over{background:#fff8ea;color:#9a6100;border-color:#f2cf83}
+    .st-warning{background:#fff7ed;color:#c2410c;border-color:#fed7aa}
+    .st-default{background:#f8fafc;color:#475569;border-color:#e2e8f0}
+
+    .warn{
+      font-size:12px;
+      font-weight:800;
+      color:#c2410c;
+      background:#fff7ed;
+      border:1px solid #fed7aa;
+      padding:8px 10px;
+      border-radius:12px;
+      line-height:1.4;
+      display:inline-block;
+    }
+
+    .pagination-wrap{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:14px;
+    }
+
+    .pagination-info{
+      font-size:13px;
+      color:var(--muted);
+      font-weight:700;
+    }
+
+    .pagination{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .page-btn{
+      min-width:42px;
+      width:auto;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#fff;
+      color:#18324f;
+      font-weight:800;
+      cursor:pointer;
+      box-shadow:var(--shadow-sm);
+    }
+
+    .page-btn.active{
+      background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);
+      color:#fff;
+      border-color:transparent;
+    }
+
+    .page-btn:disabled{
+      opacity:.5;
+      cursor:not-allowed;
+    }
+
+    @media (max-width:1200px){
+      .summary-strip{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .grid-6{grid-template-columns:repeat(3,minmax(0,1fr))}
+    }
+
+    @media (max-width:800px){
+      .wrap{padding:14px 10px 24px}
+      .hero h1{font-size:28px}
+      .summary-strip,.grid-6,.grid-2{grid-template-columns:1fr}
+      .inline-actions{flex-direction:column}
+      .inline-actions button{width:100%}
+      .pagination-wrap{align-items:flex-start}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1>Monitoring RUP vs Realisasi</h1>
+      <p>Pelacakan paket per Kode RUP dari data PERENCANAAN dan REALISASI. Monitoring ini menampilkan progres transaksi, total realisasi terhadap pagu, status progres, dan warning keterlambatan berdasarkan Waktu Pemilihan.</p>
+
+      <div class="summary-strip">
+        <div class="sum-card">
+          <div class="sum-label">Total RUP</div>
+          <div class="sum-value" id="sumTotalRup">0</div>
+        </div>
+        <div class="sum-card">
+          <div class="sum-label">Belum Berjalan</div>
+          <div class="sum-value" id="sumBelum">0</div>
+        </div>
+        <div class="sum-card">
+          <div class="sum-label">Berjalan</div>
+          <div class="sum-value" id="sumBerjalan">0</div>
+        </div>
+        <div class="sum-card">
+          <div class="sum-label">Sesuai Pagu</div>
+          <div class="sum-value" id="sumSesuai">0</div>
+        </div>
+        <div class="sum-card">
+          <div class="sum-label">Melebihi Pagu</div>
+          <div class="sum-value" id="sumOver">0</div>
+        </div>
+        <div class="sum-card">
+          <div class="sum-label">Warning</div>
+          <div class="sum-value" id="sumWarning">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Filter Monitoring</h2>
+      <div class="sub">Sumber data dibaca langsung dari file <b>inaproc-monitoring.xlsx</b> yang ada di repo GitHub. Data tampil 10 per halaman.</div>
+
+      <div class="grid grid-6">
+        <div>
+          <label>Satuan Kerja</label>
+          <select id="filter_satker"><option value="">Semua</option></select>
+        </div>
+        <div>
+          <label>Metode Pengadaan</label>
+          <select id="filter_metode"><option value="">Semua</option></select>
+        </div>
+        <div>
+          <label>Jenis Pengadaan</label>
+          <select id="filter_jenis"><option value="">Semua</option></select>
+        </div>
+        <div>
+          <label>Status Progres</label>
+          <select id="filter_status">
+            <option value="">Semua</option>
+            <option value="Belum Berjalan">Belum Berjalan</option>
+            <option value="Berjalan">Berjalan</option>
+            <option value="Sesuai Pagu">Sesuai Pagu</option>
+            <option value="Melebihi Pagu">Melebihi Pagu</option>
+          </select>
+        </div>
+        <div>
+          <label>Waktu Pemilihan</label>
+          <select id="filter_waktu"><option value="">Semua</option></select>
+        </div>
+        <div>
+          <label>Maks Data</label>
+          <select id="filter_page_size">
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="all">Semua</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-2" style="margin-top:12px;">
+        <div>
+          <label>Search Kode RUP</label>
+          <input type="text" id="filter_koderup" placeholder="Cari Kode RUP / Nama Paket / Satuan Kerja">
+        </div>
+        <div>
+          <label>Warning Keterlambatan</label>
+          <select id="filter_warning">
+            <option value="">Semua</option>
+            <option value="Ya">Hanya Warning</option>
+            <option value="Tidak">Tanpa Warning</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="inline-actions">
+        <button onclick="runMonitoring()">Tampilkan</button>
+        <button class="secondary" onclick="resetMonitoring()">Reset</button>
+      </div>
+
+      <div id="monitoringStatus" class="status"></div>
+    </div>
+
+    <div class="card">
+      <h2>Daftar Monitoring Kode RUP</h2>
+      <div class="sub">Satu baris mewakili satu Kode RUP. Nilai realisasi dihitung dari seluruh transaksi di sheet REALISASI yang memiliki Kode RUP sama.</div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Kode RUP</th>
+              <th>Nama Paket</th>
+              <th>Satuan Kerja</th>
+              <th>Jenis</th>
+              <th>Metode</th>
+              <th>Waktu Pemilihan</th>
+              <th>Pagu RUP</th>
+              <th>Jml Transaksi</th>
+              <th>Total Realisasi</th>
+              <th>Sisa Pagu</th>
+              <th>% Realisasi</th>
+              <th class="sortable" onclick="toggleStatusSort()">
+                Status Progres
+                <span id="statusSortIndicator" class="sort-indicator">↓</span>
+              </th>
+              <th>Status Paket Realisasi</th>
+              <th>Warning</th>
+            </tr>
+          </thead>
+          <tbody id="monitoringBody">
+            <tr><td colspan="14">Belum ada data.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination-wrap">
+        <div id="paginationInfo" class="pagination-info">0 data tampil</div>
+        <div id="pagination" class="pagination"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const CONFIG = {
+      XLSX_URL: 'inaproc-monitoring.xlsx',
+      PLANNING_SHEET: 'PERENCANAAN',
+      REALIZATION_SHEET: 'REALISASI'
+    };
+
+    const MONTH_NAMES = [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember'
+    ];
+
+    let allRows = [];
+    let filteredRows = [];
+    let currentPage = 1;
+    let statusSortDirection = 'desc';
+
+    function setText(id, val) {
+      const el = document.getElementById(id);
+      if (el) el.innerText = val || '';
+    }
+
+    function escapeHtml(text) {
+      return String(text || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function normalizeHeader(text) {
+      return String(text || '')
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, '_');
+    }
+
+    function parseMoney(value) {
+      if (value == null || value === '') return 0;
+      if (typeof value === 'number') return value;
+
+      let str = String(value).trim();
+      if (!str || str === '-') return 0;
+
+      str = str.replace(/Rp/gi, '')
+               .replace(/\s/g, '')
+               .replace(/\./g, '')
+               .replace(/,/g, '.')
+               .replace(/[^\d.-]/g, '');
+
+      const num = parseFloat(str);
+      return isNaN(num) ? 0 : num;
+    }
+
+    function formatMoney(num) {
+      return new Intl.NumberFormat('id-ID', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(Number(num || 0));
+    }
+
+    function formatPercent(value) {
+      const num = Number(value || 0);
+      return new Intl.NumberFormat('id-ID', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(num) + '%';
+    }
+
+    function excelDateToJSDate(value) {
+      if (value instanceof Date) return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+
+      if (typeof value === 'number') {
+        const utc_days = Math.floor(value - 25569);
+        const utc_value = utc_days * 86400;
+        const date_info = new Date(utc_value * 1000);
+        return new Date(date_info.getFullYear(), date_info.getMonth(), date_info.getDate());
+      }
+
+      if (typeof value === 'string' && value.trim()) {
+        const d = new Date(value);
+        if (!isNaN(d.getTime())) return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      }
+
+      return null;
+    }
+
+    function monthYearLabel(dateObj) {
+      if (!dateObj) return '-';
+      return MONTH_NAMES[dateObj.getMonth()] + ' ' + dateObj.getFullYear();
+    }
+
+    function getMonthYearSortValue(dateObj) {
+      if (!dateObj) return 0;
+      return (dateObj.getFullYear() * 100) + (dateObj.getMonth() + 1);
+    }
+
+    function compareMonthYearLabelAsc(a, b) {
+      const aVal = parseMonthYearLabelToSortValue(a);
+      const bVal = parseMonthYearLabelToSortValue(b);
+      return aVal - bVal;
+    }
+
+    function parseMonthYearLabelToSortValue(label) {
+      if (!label || label === '-') return 0;
+
+      const parts = String(label).trim().split(/\s+/);
+      if (parts.length < 2) return 0;
+
+      const monthName = parts[0];
+      const year = Number(parts[1]);
+      const monthIndex = MONTH_NAMES.findIndex(m => m.toLowerCase() === monthName.toLowerCase());
+
+      if (monthIndex < 0 || !year) return 0;
+
+      return (year * 100) + (monthIndex + 1);
+    }
+
+    function normalizeRows(rawRows) {
+      return (rawRows || []).map(row => {
+        const out = {};
+        Object.keys(row || {}).forEach(key => {
+          out[normalizeHeader(key)] = row[key];
+        });
+        return out;
+      });
+    }
+
+    function rowsFromSheet(workbook, sheetName) {
+      const sheet = workbook.Sheets[sheetName];
+      if (!sheet) return [];
+      return XLSX.utils.sheet_to_json(sheet, {
+        defval: '',
+        raw: true,
+        cellDates: true
+      });
+    }
+
+    function buildStatusBadge(status) {
+      const map = {
+        'Belum Berjalan': 'st-belum',
+        'Berjalan': 'st-berjalan',
+        'Sesuai Pagu': 'st-sesuai',
+        'Melebihi Pagu': 'st-over'
+      };
+      const cls = map[status] || 'st-default';
+      return `<span class="badge ${cls}">${escapeHtml(status || '-')}</span>`;
+    }
+
+    function monthsLate(fromDate, toDate) {
+      if (!fromDate || !toDate) return 0;
+      return (toDate.getFullYear() - fromDate.getFullYear()) * 12 + (toDate.getMonth() - fromDate.getMonth());
+    }
+
+    function getStatusRank(status) {
+      const val = String(status || '').trim();
+
+      if (val === 'Belum Berjalan') return 1;
+      if (val === 'Berjalan') return 2;
+      if (val === 'Sesuai Pagu') return 3;
+      if (val === 'Melebihi Pagu') return 4;
+
+      return 0;
+    }
+
+    function sortRowsByStatus(rows, direction) {
+      const cloned = [...rows];
+
+      cloned.sort((a, b) => {
+        const rankA = getStatusRank(a.status_progres);
+        const rankB = getStatusRank(b.status_progres);
+
+        if (rankA !== rankB) {
+          return direction === 'asc' ? rankA - rankB : rankB - rankA;
+        }
+
+        if (a.has_warning !== b.has_warning) {
+          return a.has_warning ? -1 : 1;
+        }
+
+        const waktuA = getMonthYearSortValue(a.waktu_pemilihan);
+        const waktuB = getMonthYearSortValue(b.waktu_pemilihan);
+
+        if (waktuA !== waktuB) {
+          return waktuA - waktuB;
+        }
+
+        return String(a.satuan_kerja || '').localeCompare(String(b.satuan_kerja || ''), 'id');
+      });
+
+      return cloned;
+    }
+
+    function updateStatusSortIndicator() {
+      const el = document.getElementById('statusSortIndicator');
+      if (!el) return;
+      el.textContent = statusSortDirection === 'asc' ? '↑' : '↓';
+    }
+
+    function buildMonitoringData(perencanaanRows, realisasiRows) {
+      const planRows = normalizeRows(perencanaanRows);
+      const realRows = normalizeRows(realisasiRows);
+
+      const groupedReal = {};
+
+      realRows.forEach(r => {
+        const kode = String(r.kode_rup || '').trim();
+        if (!kode) return;
+
+        if (!groupedReal[kode]) {
+          groupedReal[kode] = {
+            transaksi: 0,
+            total_realisasi: 0,
+            statuses: []
+          };
+        }
+
+        groupedReal[kode].transaksi += 1;
+        groupedReal[kode].total_realisasi += parseMoney(r.nilai_realisasi);
+
+        if (String(r.status_paket || '').trim()) {
+          groupedReal[kode].statuses.push(String(r.status_paket || '').trim());
+        }
+      });
+
+      const today = new Date();
+      const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+      return planRows
+        .filter(r => String(r.kode_rup || '').trim())
+        .map(r => {
+          const kodeRup = String(r.kode_rup || '').trim();
+          const pagu = parseMoney(r.nilai_pagu);
+          const real = groupedReal[kodeRup] || {
+            transaksi: 0,
+            total_realisasi: 0,
+            statuses: []
+          };
+
+          const totalRealisasi = Number(real.total_realisasi || 0);
+          const transaksi = Number(real.transaksi || 0);
+          const sisaPagu = pagu - totalRealisasi;
+          const persen = pagu > 0 ? (totalRealisasi / pagu) * 100 : 0;
+
+          let statusProgres = 'Belum Berjalan';
+          if (transaksi === 0 || totalRealisasi === 0) {
+            statusProgres = 'Belum Berjalan';
+          } else if (totalRealisasi > pagu) {
+            statusProgres = 'Melebihi Pagu';
+          } else if (Math.abs(totalRealisasi - pagu) < 1 || persen >= 99.99) {
+            statusProgres = 'Sesuai Pagu';
+          } else {
+            statusProgres = 'Berjalan';
+          }
+
+          const waktuDate = excelDateToJSDate(r.waktu_pemilihan);
+          const bulanTerlambat = waktuDate ? monthsLate(waktuDate, thisMonth) : 0;
+
+          let warningText = '';
+          if (waktuDate && bulanTerlambat > 0 && transaksi === 0) {
+            warningText = 'Sudah melewati waktu pemilihan ' + bulanTerlambat + ' bulan, belum ada realisasi.';
+          }
+
+          const statusList = [...new Set(real.statuses)].filter(Boolean);
+
+          return {
+            kode_rup: kodeRup,
+            nama_paket: String(r.nama_paket || '').trim(),
+            satuan_kerja: String(r.nama_satuan_kerja || '').trim(),
+            metode_pengadaan: String(r.metode_pengadaan || '').trim() || '-',
+            jenis_pengadaan: String(r.jenis_pengadaan || '').trim() || '-',
+            cara_pengadaan: String(r.cara_pengadaan || '').trim() || '-',
+            waktu_pemilihan: waktuDate,
+            waktu_pemilihan_label: monthYearLabel(waktuDate),
+            pagu: pagu,
+            jumlah_transaksi: transaksi,
+            total_realisasi: totalRealisasi,
+            sisa_pagu: sisaPagu,
+            persentase: persen,
+            status_progres: statusProgres,
+            status_paket_realisasi: statusList.join(', ') || '-',
+            warning_text: warningText,
+            has_warning: !!warningText
+          };
+        });
+    }
+
+    function fillSelect(id, items) {
+      const el = document.getElementById(id);
+      const oldVal = el.value;
+      const firstLabel = el.options[0] ? el.options[0].textContent : 'Semua';
+
+      el.innerHTML = `<option value="">${escapeHtml(firstLabel)}</option>`;
+
+      (items || []).forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = v;
+        el.appendChild(opt);
+      });
+
+      const oldExists = [...el.options].some(opt => opt.value === oldVal);
+      if (oldExists) el.value = oldVal;
+    }
+
+    function buildFilterOptions(rows) {
+      fillSelect(
+        'filter_satker',
+        [...new Set(rows.map(r => r.satuan_kerja).filter(Boolean))]
+          .sort((a, b) => a.localeCompare(b, 'id'))
+      );
+
+      fillSelect(
+        'filter_metode',
+        [...new Set(rows.map(r => r.metode_pengadaan).filter(Boolean))]
+          .sort((a, b) => a.localeCompare(b, 'id'))
+      );
+
+      fillSelect(
+        'filter_jenis',
+        [...new Set(rows.map(r => r.jenis_pengadaan).filter(Boolean))]
+          .sort((a, b) => a.localeCompare(b, 'id'))
+      );
+
+      fillSelect(
+        'filter_waktu',
+        [...new Set(rows.map(r => r.waktu_pemilihan_label).filter(v => v && v !== '-'))]
+          .sort(compareMonthYearLabelAsc)
+      );
+    }
+
+    function renderRows(rows) {
+      const tbody = document.getElementById('monitoringBody');
+      tbody.innerHTML = '';
+
+      if (!rows || !rows.length) {
+        tbody.innerHTML = '<tr><td colspan="14">Data tidak ditemukan.</td></tr>';
+        return;
+      }
+
+      rows.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="bold">${escapeHtml(row.kode_rup)}</td>
+          <td>${escapeHtml(row.nama_paket || '-')}</td>
+          <td>${escapeHtml(row.satuan_kerja || '-')}</td>
+          <td>${escapeHtml(row.jenis_pengadaan || '-')}</td>
+          <td>${escapeHtml(row.metode_pengadaan || '-')}</td>
+          <td>${escapeHtml(row.waktu_pemilihan_label || '-')}</td>
+          <td class="right">${formatMoney(row.pagu)}</td>
+          <td class="center">${escapeHtml(String(row.jumlah_transaksi || 0))}</td>
+          <td class="right">${formatMoney(row.total_realisasi)}</td>
+          <td class="right">${formatMoney(row.sisa_pagu)}</td>
+          <td class="right">${formatPercent(row.persentase)}</td>
+          <td>${buildStatusBadge(row.status_progres)}</td>
+          <td>${escapeHtml(row.status_paket_realisasi || '-')}</td>
+          <td>${row.has_warning ? `<span class="warn">${escapeHtml(row.warning_text)}</span>` : '-'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function setSummary(rows) {
+      const summary = {
+        total: rows.length,
+        belum: 0,
+        berjalan: 0,
+        sesuai: 0,
+        over: 0,
+        warning: 0
+      };
+
+      rows.forEach(row => {
+        if (row.status_progres === 'Belum Berjalan') summary.belum++;
+        else if (row.status_progres === 'Berjalan') summary.berjalan++;
+        else if (row.status_progres === 'Sesuai Pagu') summary.sesuai++;
+        else if (row.status_progres === 'Melebihi Pagu') summary.over++;
+
+        if (row.has_warning) summary.warning++;
+      });
+
+      setText('sumTotalRup', String(summary.total));
+      setText('sumBelum', String(summary.belum));
+      setText('sumBerjalan', String(summary.berjalan));
+      setText('sumSesuai', String(summary.sesuai));
+      setText('sumOver', String(summary.over));
+      setText('sumWarning', String(summary.warning));
+    }
+
+    function renderPagination(totalRows, pageSize) {
+      const wrap = document.getElementById('pagination');
+      const info = document.getElementById('paginationInfo');
+      wrap.innerHTML = '';
+
+      if (pageSize === 'all') {
+        info.innerText = `${totalRows} data tampil`;
+        return;
+      }
+
+      const size = Number(pageSize || 10);
+      const totalPages = Math.max(1, Math.ceil(totalRows / size));
+
+      const start = totalRows === 0 ? 0 : ((currentPage - 1) * size) + 1;
+      const end = Math.min(currentPage * size, totalRows);
+
+      info.innerText = `${start}-${end} dari ${totalRows} data • Page ${currentPage} / ${totalPages}`;
+
+      const prevBtn = document.createElement('button');
+      prevBtn.className = 'page-btn';
+      prevBtn.textContent = 'Prev';
+      prevBtn.disabled = currentPage === 1;
+      prevBtn.onclick = function() {
+        if (currentPage > 1) {
+          currentPage--;
+          updateTableOnly();
+        }
+      };
+      wrap.appendChild(prevBtn);
+
+      let startPage = Math.max(1, currentPage - 2);
+      let endPage = Math.min(totalPages, currentPage + 2);
+
+      if (currentPage <= 3) endPage = Math.min(totalPages, 5);
+      if (currentPage >= totalPages - 2) startPage = Math.max(1, totalPages - 4);
+
+      for (let i = startPage; i <= endPage; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'page-btn' + (i === currentPage ? ' active' : '');
+        btn.textContent = i;
+        btn.onclick = function() {
+          currentPage = i;
+          updateTableOnly();
+        };
+        wrap.appendChild(btn);
+      }
+
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'page-btn';
+      nextBtn.textContent = 'Next';
+      nextBtn.disabled = currentPage === totalPages;
+      nextBtn.onclick = function() {
+        if (currentPage < totalPages) {
+          currentPage++;
+          updateTableOnly();
+        }
+      };
+      wrap.appendChild(nextBtn);
+    }
+
+    function updateTableOnly() {
+      const pageSize = document.getElementById('filter_page_size').value;
+      let rowsToRender = filteredRows;
+
+      if (pageSize !== 'all') {
+        const size = Number(pageSize || 10);
+        const totalPages = Math.max(1, Math.ceil(filteredRows.length / size));
+        if (currentPage > totalPages) currentPage = totalPages;
+
+        const startIndex = (currentPage - 1) * size;
+        const endIndex = startIndex + size;
+        rowsToRender = filteredRows.slice(startIndex, endIndex);
+      }
+
+      renderRows(rowsToRender);
+      renderPagination(filteredRows.length, pageSize);
+      setText('monitoringStatus', `${rowsToRender.length} data tampil.`);
+      updateStatusSortIndicator();
+    }
+
+    function applyDefaultSorting(rows) {
+      return sortRowsByStatus(rows, statusSortDirection);
+    }
+
+    function runMonitoring() {
+      const satker = document.getElementById('filter_satker').value;
+      const metode = document.getElementById('filter_metode').value;
+      const jenis = document.getElementById('filter_jenis').value;
+      const status = document.getElementById('filter_status').value;
+      const waktu = document.getElementById('filter_waktu').value;
+      const keyword = document.getElementById('filter_koderup').value.trim().toLowerCase();
+      const warning = document.getElementById('filter_warning').value;
+
+      currentPage = 1;
+
+      filteredRows = allRows.filter(row => {
+        if (satker && row.satuan_kerja !== satker) return false;
+        if (metode && row.metode_pengadaan !== metode) return false;
+        if (jenis && row.jenis_pengadaan !== jenis) return false;
+        if (status && row.status_progres !== status) return false;
+        if (waktu && row.waktu_pemilihan_label !== waktu) return false;
+
+        if (warning === 'Ya' && !row.has_warning) return false;
+        if (warning === 'Tidak' && row.has_warning) return false;
+
+        if (keyword) {
+          const haystack = [
+            row.kode_rup,
+            row.nama_paket,
+            row.satuan_kerja,
+            row.metode_pengadaan,
+            row.jenis_pengadaan
+          ].join(' ').toLowerCase();
+
+          if (!haystack.includes(keyword)) return false;
+        }
+
+        return true;
+      });
+
+      filteredRows = applyDefaultSorting(filteredRows);
+
+      setSummary(filteredRows);
+      updateTableOnly();
+    }
+
+    function toggleStatusSort() {
+      statusSortDirection = statusSortDirection === 'asc' ? 'desc' : 'asc';
+      filteredRows = sortRowsByStatus(filteredRows, statusSortDirection);
+      currentPage = 1;
+      updateTableOnly();
+    }
+
+    function resetMonitoring() {
+      document.getElementById('filter_satker').value = '';
+      document.getElementById('filter_metode').value = '';
+      document.getElementById('filter_jenis').value = '';
+      document.getElementById('filter_status').value = '';
+      document.getElementById('filter_waktu').value = '';
+      document.getElementById('filter_koderup').value = '';
+      document.getElementById('filter_warning').value = '';
+      document.getElementById('filter_page_size').value = '10';
+      statusSortDirection = 'desc';
+      runMonitoring();
+    }
+
+    async function loadMonitoringData() {
+      try {
+        setText('monitoringStatus', 'Memuat file Excel monitoring...');
+
+        const res = await fetch(CONFIG.XLSX_URL);
+        if (!res.ok) {
+          throw new Error('File Excel tidak ditemukan: ' + CONFIG.XLSX_URL);
+        }
+
+        const arrayBuffer = await res.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
+
+        const perencanaanRows = rowsFromSheet(workbook, CONFIG.PLANNING_SHEET);
+        const realisasiRows = rowsFromSheet(workbook, CONFIG.REALIZATION_SHEET);
+
+        allRows = buildMonitoringData(perencanaanRows, realisasiRows);
+        buildFilterOptions(allRows);
+        runMonitoring();
+      } catch (err) {
+        console.error(err);
+        setText('monitoringStatus', 'Gagal memuat data monitoring: ' + (err.message || String(err)));
+        renderRows([]);
+        setSummary([]);
+        document.getElementById('pagination').innerHTML = '';
+        document.getElementById('paginationInfo').innerText = '0 data tampil';
+      }
+    }
+
+    loadMonitoringData();
+  </script>
+</body>
+</html>
