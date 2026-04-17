@@ -624,13 +624,6 @@
             </div>
           </div>
 
-          <div class="meta-box">
-            <div class="meta-label">Dokumen Pendukung</div>
-            <div id="pelaku_file" class="meta-value" style="font-size:14px;font-weight:600;">-</div>
-          </div>
-        </div>
-      </div>
-
       <div class="page">
         <div class="page-head">
           <h2>ITKP OPD INDIKATOR PEMANFAATAN SISTEM PENGADAAN</h2>
@@ -1282,12 +1275,6 @@
       setText('pelaku_jumlah', pelaku.jumlah_pp_ppk || '-');
       setText('pelaku_daftar', pelaku.daftar_pp_ppk || '-');
 
-      setHtml(
-        'pelaku_file',
-        renderLinkOnly(
-          pelaku.link_dokumen_pendukung || pelaku.file_url || '',
-          'Dokumen Pendukung'
-        )
       );
 
       setHtml(
